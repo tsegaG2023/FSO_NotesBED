@@ -1,0 +1,20 @@
+POST http://localhost:8000/api/notes
+Content-Type: application/json
+
+{
+    "Important": false,
+    "content":"test the post request content"
+}
+###
+GET http://localhost:8000/api/notes/2
+
+###
+GET http://localhost:8000/api/notes
+
+###
+PUT  http://localhost:8000/api/notes/2
+content-Type: application/json
+{
+    "Important": false,
+    "content":"test the post request content"
+}
