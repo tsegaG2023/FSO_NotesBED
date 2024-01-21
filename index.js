@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const notesApp = express();
 notesApp.use(express.json());
+notesApp.use(express.static("dist"));
 notesApp.use(cors());
 let notes = [
   {
