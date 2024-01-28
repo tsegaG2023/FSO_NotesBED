@@ -1,26 +1,56 @@
+require("dotenv").config();
+const Note = require("./models/notes");
 const express = require("express");
 const cors = require("cors");
+const { default: mongoose } = require("mongoose");
 const notesApp = express();
 notesApp.use(express.json());
 notesApp.use(express.static("dist"));
 notesApp.use(cors());
+
+const unknownrequest = (request, response) => {
+  response.status(404);
+  response.json({ error: "No such end point" });
+};
+const errorHandler = (error, request, response, next) => {
+  console.log("error handler called");
+  if (error.name === "CastError") {
+    return response.status(404).send({ error: error.message });
+  } else if (error.name === "ValidationError") {
+    return response.status(404).send({ error: error.message });
+  }
+  next(error);
+};
 let notes = [
   {
     id: 1,
-    content: "part 0",
-    important: true,
-  },
-  {
-    id: 2,
-    content: "part 1",
-    important: true,
-  },
-  {
-    id: 3,
-    content: "part 2",
-    important: true,
+    content: "Default",
+    important: false,
   },
 ];
+
+// let notes = [
+//   {
+//     id: 1,
+//     content: "part 0",
+//     important: true,
+//   },
+//   {
+//     id: 2,
+//     content: "part 1",
+//     important: true,
+//   },
+//   {
+//     id: 3,
+//     content: "part 2",
+//     important: true,
+//   },
+//   {
+//     id: 4,
+//     content: "part 3",
+//     important: true,
+//   },
+// ];
 const PORT = process.env.port || "8000";
 notesApp.listen(PORT, () => {
   console.log("listening for connnecton to humble sever");
@@ -43,18 +73,23 @@ notesApp.get("/", (request, response) => {
 });
 
 notesApp.get("/api/notes", (request, response) => {
-  response.json(notes);
+  Note.find({}).then((result) => {
+    response.json(result);
+  });
 });
-notesApp.get("/api/notes/:id", (request, response) => {
+notesApp.get("/api/notes/:id", (request, response, next) => {
   const id = request.params.id;
-  const note = notes.find((note) => String(note.id) === id);
-  console.log(note);
-  if (note) {
-    response.json(note);
-  } else {
-    response.statusMessage = `The requried note with id: ${id} is not found`;
-    response.status(404).end();
-  }
+  // const note = notes.find((note) => String(note.id) === id);
+  Note.findById(id)
+    .then((note) => {
+      console.log(note);
+      response.json(note);
+    })
+    .catch((error) => {
+      // response.statusMessage = `The requried note with id: ${id} is not found`;
+      // response.status(404).end();
+      next(error);
+    });
 });
 
 notesApp.delete("/api/notes/:id", (request, response) => {
@@ -65,40 +100,63 @@ notesApp.delete("/api/notes/:id", (request, response) => {
   response.status(204).end();
 });
 
-notesApp.post("/api/notes/", (request, response) => {
+notesApp.post("/api/notes/", (request, response, next) => {
   if (!request.body.content) {
     return response.status(400).json({ error: "no content found" });
   }
-  const newNote = {
+  const newNote = new Note({
     id: generateNewId(),
     content: request.body.content,
     Important: Boolean(request.body.Important) || false,
-  };
-  notes = notes.concat(newNote);
-  response.json(newNote);
+  });
+  // notes = notes.concat(newNote);
+  newNote
+    .save()
+    .then((savedNote) => {
+      response.json(savedNote);
+    })
+    .catch((error) => {
+      next(error);
+    });
+  // response.json(newNote);
 });
 
-notesApp.put("/api/notes/:id", (request, response) => {
+notesApp.put("/api/notes/:id", (request, response, next) => {
   const body = request.body;
-  console.log(body);
-  const id = Number(request.params.id);
-  console.log(id);
-  const found = notes.find((note) => {
-    return note.id === id;
-  });
-  console.log("Found status", found);
+  // console.log(body);
+  const id = String(request.params.id);
+  console.log("id", id);
+  // const found = notes.find((note) => {
+  //   return note.id === id;
+  // });
+  // console.log("Found status", found);
   const newObj = {
-    id: id,
+    // id: id,
     content: body.content,
     important: Boolean(body.important),
   };
-  if (found) {
-    notes = notes
-      .filter((note) => {
-        return note.id != id;
-      })
-      .concat(newObj);
-    return response.json(newObj);
-  }
-  response.status(404).end();
+
+  // if (found) {
+  Note.findByIdAndUpdate(id, newObj, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
+    .then((updated) => {
+      response.json(updated);
+    })
+    .catch((error) => {
+      next(error);
+    });
+  // notes = notes
+  //   .filter((note) => {
+  //     return note.id != id;
+  //   })
+  //   .concat(newObj);
+  // return response.json(newObj);
+  // }
+  // response.status(404).end();
 });
+
+notesApp.use(unknownrequest);
+notesApp.use(errorHandler);

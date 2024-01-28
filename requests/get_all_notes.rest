@@ -1,20 +1,25 @@
-POST http://localhost:8000/api/notes
+POST http://localhost:3001/api/notes
 Content-Type: application/json
 
 {
     "Important": false,
-    "content":"test the post request content"
+    "content":"test1"
 }
 ###
-GET http://localhost:8000/api/notes/2
+GET http://localhost:3001/api/notes/65b502a9a6740d04f4989144
 
 ###
-GET http://localhost:8000/api/notes
+GET http://localhost:3001/api/notes/65b502a94a6740d04f4989144
+
 
 ###
-PUT  http://localhost:8000/api/notes/2
+GET http://localhost:3001/api/notes
+
+###
+PUT  http://localhost:3001/api/notes/65b502a9a6740d04f4989144
 content-Type: application/json
+
 {
-    "Important": false,
-    "content":"test the post request content"
+    "important": false,
+    "content":"update"
 }
