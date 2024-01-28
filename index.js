@@ -51,7 +51,7 @@ let notes = [
 //     important: true,
 //   },
 // ];
-const PORT = process.env.port || "8000";
+const PORT = process.env.PORT || "8000";
 console.log("Port Number", PORT);
 notesApp.listen(PORT, () => {
   console.log("listening for connnecton to humble sever");
